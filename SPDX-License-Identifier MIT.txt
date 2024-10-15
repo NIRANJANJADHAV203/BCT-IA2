@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract DoubleSpendingMitigation {
+
+    // Track processed transactions using a mapping
+    mapping(address => uint256) public nonces;
+
+    event Transfer(address indexed sender, address indexed receiver, uint256 amount, uint256 nonce);
+
+    // A mapping to track balances
+    mapping(address => uint256) public balances;
+
+    constructor() {
+        // Initial balance for testing
+        balances[msg.sender] = 1000; // Give contract deployer 1000 tokens
+    }
+
+    // Function to transfer tokens and prevent double spending
+    function transfer(address _receiver, uint256 _amount, uint256 _nonce) public {
+        require(balances[msg.sender] >= _amount, "Insufficient balance");
+        require(_nonce == nonces[msg.sender], "Invalid nonce or double spending attempt");
+
+        // Transfer the tokens
+        balances[msg.sender] -= _amount;
+        balances[_receiver] += _amount;
+
+        // Increment the nonce to prevent re-use
+        nonces[msg.sender]++;
+
+        emit Transfer(msg.sender, _receiver, _amount, _nonce);
+    }
+
+    // Function to check balances of a specific address
+    function getBalance(address _addr) public view returns (uint256) {
+        return balances[_addr];
+    }
+}
